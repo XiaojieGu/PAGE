@@ -5,3 +5,5 @@ The source code for paper -- PAGE: A POSITION-AWARE GRAPH-BASED MODEL FOR EMOTIO
 - Pytorch==1.10.2
 - Transformers== 4.6.0
 - Torch-geometric== 2.1.0.post1
+## Data
+Our model uses the conversation dataset [RECCON](https://github.com/declare-lab/RECCON/tree/main/data/subtask2/fold1), which consists of two subsets: RECCON-DD and RECCON-IE. 
