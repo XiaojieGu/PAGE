@@ -7,4 +7,4 @@ The source code for paper -- PAGE: A POSITION-AWARE GRAPH-BASED MODEL FOR EMOTIO
 - Torch-geometric==2.1.0.post1
 ## Data
 Our model uses the conversation dataset [RECCON](https://github.com/declare-lab/RECCON/tree/main/data/subtask2/fold1), which consists of two subsets: RECCON-DD and RECCON-IE.  
-We follow [KEC](https://github.com/LeqsNaN/KEC), the preprocessing code and the processed dataset are in the `./data` directory.
+We follow [KEC](https://github.com/LeqsNaN/KEC), the processed dataset are in the `./data` directory.
