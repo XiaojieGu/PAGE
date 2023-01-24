@@ -1,0 +1,79 @@
+[Train] Epoch 1: ECE loss: 0.30557, Fscore: 0.6244
+[DEV]: Fscore: 0.7962
+[TEST]: Fscore: 0.7694
+[IEMOCAP]: Fscore: 0.6897
+[Train] Epoch 2: ECE loss: 0.210287, Fscore: 0.778
+[DEV]: Fscore: 0.8257
+[TEST]: Fscore: 0.805
+[IEMOCAP]: Fscore: 0.699
+[Train] Epoch 3: ECE loss: 0.194146, Fscore: 0.8009
+[DEV]: Fscore: 0.827
+[TEST]: Fscore: 0.8005
+[IEMOCAP]: Fscore: 0.7013
+[Train] Epoch 4: ECE loss: 0.176684, Fscore: 0.8198
+[DEV]: Fscore: 0.8586
+[TEST]: Fscore: 0.8223
+[IEMOCAP]: Fscore: 0.7112
+[Train] Epoch 5: ECE loss: 0.16614, Fscore: 0.8388
+[DEV]: Fscore: 0.7943
+[TEST]: Fscore: 0.7863
+[IEMOCAP]: Fscore: 0.6767
+[Train] Epoch 6: ECE loss: 0.149629, Fscore: 0.8573
+[DEV]: Fscore: 0.7944
+[TEST]: Fscore: 0.781
+[IEMOCAP]: Fscore: 0.6608
+[Train] Epoch 7: ECE loss: 0.137407, Fscore: 0.8699
+[DEV]: Fscore: 0.824
+[TEST]: Fscore: 0.7978
+[IEMOCAP]: Fscore: 0.6608
+[Train] Epoch 8: ECE loss: 0.126343, Fscore: 0.8869
+[DEV]: Fscore: 0.8191
+[TEST]: Fscore: 0.8006
+[IEMOCAP]: Fscore: 0.6558
+[Train] Epoch 9: ECE loss: 0.116302, Fscore: 0.8978
+[DEV]: Fscore: 0.824
+[TEST]: Fscore: 0.8064
+[IEMOCAP]: Fscore: 0.6845
+[Train] Epoch 10: ECE loss: 0.108904, Fscore: 0.9035
+[DEV]: Fscore: 0.8179
+[TEST]: Fscore: 0.7832
+[IEMOCAP]: Fscore: 0.6541
+
+
+[FINAL--DEV]: best_Fscore: 0.8586
+
+              precision    recall  f1-score   support
+
+         neg     0.9734    0.9662    0.9698    2842.0
+         pos     0.7249    0.7713    0.7474     328.0
+
+    accuracy                         0.9461    3170.0
+   macro avg     0.8492    0.8688    0.8586    3170.0
+weighted avg     0.9477    0.9461    0.9468    3170.0
+
+
+
+[FINAL--TEST]: best_Fscore: 0.8223
+
+              precision    recall  f1-score   support
+
+         neg     0.9656    0.9500    0.9577   14052.0
+         pos     0.6476    0.7312    0.6869    1767.0
+
+    accuracy                         0.9255   15819.0
+   macro avg     0.8066    0.8406    0.8223   15819.0
+weighted avg     0.9301    0.9255    0.9275   15819.0
+
+
+
+[FINAL--IEMOCAP]: best_Fscore: 0.7112
+
+              precision    recall  f1-score   support
+
+         neg     0.9647    0.9679    0.9663   16528.0
+         pos     0.4685    0.4444    0.4561    1053.0
+
+    accuracy                         0.9365   17581.0
+   macro avg     0.7166    0.7062    0.7112   17581.0
+weighted avg     0.9350    0.9365    0.9357   17581.0
+
