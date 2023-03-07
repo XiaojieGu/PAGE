@@ -1,11 +1,3 @@
-'''
-Author: RenzeLou marionojump0722@gmail.com
-Date: 2022-09-14 22:11:12
-LastEditors: RenzeLou marionojump0722@gmail.com
-LastEditTime: 2022-11-05 23:56:16
-FilePath: /7-bare-RUN/iemo_cap.py
-Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
-'''
 
 import json
 import pickle
@@ -14,6 +6,7 @@ processed_data_path = '/home/DATA1/gxj/iemocap_test.pkl'
 f = open(iemocap_path,'r',encoding='utf-8')
 m = json.load(f)
 most_cap = []
+
 
 for i in m:
     data = m[i][0]
@@ -40,7 +33,7 @@ for i in m:
                     utter['expanded emotion cause evidence'][num]='b'
             cap['evidence'] = utter['expanded emotion cause evidence']
         all_cap.append(cap)
-    # print(all_cap)   
+
     most_cap.append(all_cap)
     
 
