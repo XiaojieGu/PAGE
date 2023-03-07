@@ -1,7 +1,7 @@
 import random
 import numpy as np
 import os
-# os.environ['CUDA_VISIBLE_DEVICES'] = "7"
+os.environ['CUDA_VISIBLE_DEVICES'] = "7"
 import torch
 import pickle
 import argparse
@@ -14,14 +14,16 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def train(model, model_path, train_loader, dev_loader, test_loader,iemo_loader,
+def train(model, model_path, train_loader, dev_loader, dd_loader, ie_loader,
           loss_fn, optimizer, n_epochs, log, accumulate_step, scheduler):
     model.train()
     best_f1_score_ece = 0.
-    best_f1_score_ece_test = 0.
+    best_f1_score_ece_dd = 0.
+    best_f1_score_ece_ie = 0.
 
     best_report_ece = None
-    best_report_ece_test = None
+    best_report_ece_dd = None
+    best_report_ece_ie = None
 
     step = 0
 
@@ -34,9 +36,8 @@ def train(model, model_path, train_loader, dev_loader, test_loader,iemo_loader,
 
         for data in train_loader:
       
-            
             input_ids, attention_mask, clen, mask, adj_index, label, ece_pair, _ = data
-            
+
             mask = mask.cuda()
             label = label.cuda()
             ece_pair = ece_pair.cuda()
@@ -57,7 +58,7 @@ def train(model, model_path, train_loader, dev_loader, test_loader,iemo_loader,
             ece_total_sample += ece_samples
             loss = loss_fn(ece_pair, prediction, mask)
             ece_loss = ece_loss + loss.item() * ece_samples
-            # torch.gt(input, other)  returns True where input is greater than other and False
+
             ece_prediction = torch.gt(prediction.data, 0.5).long()
             ece_prediction_list.append(torch.flatten(ece_prediction.data).cpu().numpy())
 
@@ -83,21 +84,21 @@ def train(model, model_path, train_loader, dev_loader, test_loader,iemo_loader,
         log.write(log_line + '\n')
 
         dev_fscores, dev_reports = valid('DEV', model, dev_loader, log)
-        test_fscores, test_reports = valid('DD_test', model, test_loader, log)
-        iemocap_fscores, iemocap_reports = valid('IE_test', model, iemo_loader, log)
+        dd_fscores, dd_reports = valid('DD_test', model, dd_loader, log)
+        ie_fscores, ie_reports = valid('IE_test', model, ie_loader, log)
 
 
         ece_final_fscore_dev = dev_fscores[0]
-        ece_final_fscore_test = test_fscores[0]
-        ece_final_fscore_iemocap = iemocap_fscores[0]
+        ece_final_fscore_dd = dd_fscores[0]
+        ece_final_fscore_ie = ie_fscores[0]
         if best_f1_score_ece < ece_final_fscore_dev:
             best_f1_score_ece = ece_final_fscore_dev
-            best_f1_score_ece_test = ece_final_fscore_test
-            best_f1_score_ece_iemocap = ece_final_fscore_iemocap
+            best_f1_score_ece_dd = ece_final_fscore_dd
+            best_f1_score_ece_ie = ece_final_fscore_ie
             
             best_report_ece = dev_reports
-            best_report_ece_test = test_reports
-            best_report_ece_iemocap = iemocap_reports
+            best_report_ece_dd = dd_reports
+            best_report_ece_ie = ie_reports
 
 
     log_line = f'[FINAL--DEV]: best_Fscore: {round(best_f1_score_ece, 4)}'
@@ -105,18 +106,18 @@ def train(model, model_path, train_loader, dev_loader, test_loader,iemo_loader,
     log.write('\n\n' + log_line + '\n\n')
     log.write(best_report_ece + '\n')
 
-    log_line = f'[FINAL--DD_test]: best_Fscore: {round(best_f1_score_ece_test, 4)}'
+    log_line = f'[FINAL--DD_test]: best_Fscore: {round(best_f1_score_ece_dd, 4)}'
     print(log_line)
     log.write('\n\n' + log_line + '\n\n')
-    log.write(best_report_ece_test + '\n')
+    log.write(best_report_ece_dd + '\n')
     
-    log_line = f'[FINAL--IE_test]: best_Fscore: {round(best_f1_score_ece_iemocap, 4)}'
+    log_line = f'[FINAL--IE_test]: best_Fscore: {round(best_f1_score_ece_ie, 4)}'
     print(log_line)
     log.write('\n\n' + log_line + '\n\n')
-    log.write(best_report_ece_iemocap + '\n')
+    log.write(best_report_ece_ie + '\n')
     log.close()
 
-    return best_f1_score_ece, best_f1_score_ece_test,best_f1_score_ece_iemocap
+    return best_f1_score_ece, best_f1_score_ece_dd,best_f1_score_ece_ie
 
 
 def valid(valid_type, model, data_loader, log):
@@ -151,6 +152,7 @@ def valid(valid_type, model, data_loader, log):
             ece_prediction_mask.append(torch.flatten(mask.data).cpu().numpy())
             ece_samples = mask.data.sum().item()
             ece_total_sample += ece_samples
+
     ece_prediction_mask = np.concatenate(ece_prediction_mask)
     ece_label_list = np.concatenate(ece_label_list)
     ece_prediction = np.concatenate(ece_prediction_list)
@@ -158,7 +160,9 @@ def valid(valid_type, model, data_loader, log):
                           ece_prediction,
                           average='macro',
                           sample_weight=ece_prediction_mask)
+
     log_line = f'[{valid_type}]: Fscore: {round(fscore_ece, 4)}'
+    
     reports = classification_report(ece_label_list,
                                     ece_prediction,
                                     target_names=['neg', 'pos'],
@@ -205,14 +209,12 @@ def main(args, seed=0, index=0):
     max_len = args.max_len
     posi_dim = args.posi_dim
 
-    train_loader, dev_loader, test_loader, iemo_loader = get_dataloaders(model_size, batch_size, valid_shuffle)
+    train_loader, dev_loader, dd_loader, ie_loader = get_dataloaders(model_size, batch_size, valid_shuffle)
     n_epochs = args.n_epochs
     weight_decay = args.weight_decay
     utter_dim = args.utter_dim
-    
     accumulate_step = args.accumulate_step
     scheduler_type = args.scheduler
-
     emotion_dim = args.emotion_dim
     
 
@@ -224,9 +226,7 @@ def main(args, seed=0, index=0):
     num_bases = args.num_bases
 
     emo_emb = pickle.load(open('emotion_embeddings.pkl', 'rb'), encoding='latin1')
-
     model = PAGE(utter_dim,emo_emb,emotion_dim,att_dropout,mlp_dropout,pag_dropout,ff_dim,nhead,window,num_bases,max_len,posi_dim)
-
 
     loss_fn = MaskedBCELoss2()
       
@@ -248,9 +248,9 @@ def main(args, seed=0, index=0):
         scheduler = get_constant_schedule(optimizer)
     model = model.cuda()
     
-    dev_fscore, test_fscore ,iemocap_fscore= train(model, model_name, train_loader, dev_loader, test_loader,iemo_loader,
+    dev_fscore, dd_fscore ,ie_fscore= train(model, model_name, train_loader, dev_loader, dd_loader, ie_loader,
                                     loss_fn, optimizer, n_epochs, log, accumulate_step, scheduler)
-    return dev_fscore, test_fscore, iemocap_fscore,model_path
+    return dev_fscore, dd_fscore, ie_fscore,model_path
 
 if __name__ == '__main__': 
     parser = argparse.ArgumentParser()
@@ -270,10 +270,10 @@ if __name__ == '__main__':
     parser.add_argument('--posi_dim', type=int, required=False, default=100)
     parser.add_argument('--pag_dropout', required=False, type=float, default=0.1)
     parser.add_argument('--att_dropout', required=False, type=float, default=0.1)
+    parser.add_argument('--mlp_dropout', type=float, required=False, default=0.1)
     parser.add_argument('--nhead', required=False, type=int, default=6)
     parser.add_argument('--ff_dim', required=False, type=int, default=128)
     parser.add_argument('--utter_dim', type=int, required=False, default=300)
-    parser.add_argument('--mlp_dropout', type=float, required=False, default=0.1)
     parser.add_argument('--num_bases', type=int, required=False, default=2)
     parser.add_argument('--seed', nargs='+', type=int, required=False, default=[0, 1, 2, 3, 4])
     parser.add_argument('--index', nargs='+', type=int, required=False, default=[0, 1, 2, 3, 4])
@@ -284,24 +284,24 @@ if __name__ == '__main__':
     seed_list = args_for_main.seed
     index_list = args_for_main.index
     dev_fscore_list = []
-    test_fscore_list = []
-    iemocap_fscore_list = []
+    dd_fscore_list = []
+    ie_fscore_list = []
     
     model_dir = ''
     for sd, idx in zip(seed_list, index_list):
-        dev_f1, test_f1, iemo_f1, model_dir = main(args_for_main, sd, idx)
+        dev_f1, dd_f1, ie_f1, model_dir = main(args_for_main, sd, idx)
         dev_fscore_list.append(dev_f1)
-        test_fscore_list.append(test_f1)
-        iemocap_fscore_list.append(iemo_f1)
+        dd_fscore_list.append(dd_f1)
+        ie_fscore_list.append(ie_f1)
 
     dev_fscore_mean = np.round(np.mean(dev_fscore_list) * 100, 2)
     dev_fscore_std = np.round(np.std(dev_fscore_list) * 100, 2)
 
-    test_fscore_mean = np.round(np.mean(test_fscore_list) * 100, 2)
-    test_fscore_std = np.round(np.std(test_fscore_list) * 100, 2)
+    dd_fscore_mean = np.round(np.mean(dd_fscore_list) * 100, 2)
+    dd_fscore_std = np.round(np.std(dd_fscore_list) * 100, 2)
 
-    iemocap_fscore_mean = np.round(np.mean(iemocap_fscore_list) * 100, 2)
-    iemocap_fscore_std = np.round(np.std(iemocap_fscore_list) * 100, 2)
+    ie_fscore_mean = np.round(np.mean(ie_fscore_list) * 100, 2)
+    ie_fscore_std = np.round(np.std(ie_fscore_list) * 100, 2)
 
     logs_path = model_dir + '/log_metrics_' + str(index_list[0]) + '-' + str(index_list[-1]) + '.txt'
     logs = open(logs_path, 'w')
@@ -311,9 +311,9 @@ if __name__ == '__main__':
     log_lines = f'DEV fscore: {dev_fscore_mean}(+-{dev_fscore_std})'
     print(log_lines)
     logs.write(log_lines + '\n')
-    log_lines = f'DD fscore: {test_fscore_mean}(+-{test_fscore_std})'
+    log_lines = f'DD fscore: {dd_fscore_mean}(+-{dd_fscore_std})'
     print(log_lines)
-    log_lines = f'IE fscore: {iemocap_fscore_mean}(+-{iemocap_fscore_std})'
+    log_lines = f'IE fscore: {ie_fscore_mean}(+-{ie_fscore_std})'
     print(log_lines)
     logs.write(log_lines + '\n')
     logs.close()
