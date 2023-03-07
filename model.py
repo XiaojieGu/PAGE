@@ -53,7 +53,6 @@ class Causal_Classifier(nn.Module):
         super(Causal_Classifier, self).__init__()
         self.input_dim = input_dim
         self.mlp_dim = mlp_dim
-
         self.mlp_dropout = mlp_dropout
 
         self.mlp = nn.Sequential(nn.Linear(2*input_dim+200, mlp_dim, False), nn.ReLU(), nn.Dropout(mlp_dropout),
@@ -63,21 +62,18 @@ class Causal_Classifier(nn.Module):
     def forward(self, x,rel_emb_k,rel_emb_v,mask):
 
         batch_size = x.shape[0]
-
         x_dim = x.shape[2]
-        
         slen = x.shape[1]
 
         x_source = x.unsqueeze(1).expand(batch_size, slen, slen, x_dim)
         x_target = x.unsqueeze(2).expand(batch_size, slen, slen, x_dim)
-        # [batch_size, conv_len, conv_len, 2*x_dim]
+
 
         x_source = torch.cat([x_source,rel_emb_k],dim=-1)
         x_target = torch.cat([x_target,rel_emb_v],dim=-1)
-        
         x_cat = torch.cat([x_source, x_target], dim=-1)  
 
-        # [batch_size, conv_len, conv_len]
+
         predict_score = self.predictor_weight(self.mlp(x_cat)).squeeze(-1)
         predict_score = torch.sigmoid(predict_score) * mask
        
