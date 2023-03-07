@@ -44,7 +44,7 @@ class UtterEncoder(nn.Module):
         ss = self.norm(ss)
         out = self.mlp(ss)
 
-        return out  # [batch_size, conv_size, utter_dim]
+        return out  
 
 
    
