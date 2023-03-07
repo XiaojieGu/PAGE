@@ -27,7 +27,7 @@ class PAGE(nn.Module):
         self.classifier = Causal_Classifier(utter_dim, utter_dim)
 
     def forward(self, input_ids, attention_mask, mask, adj,label):
-        utter_emb = self.utter_encoder(input_ids, attention_mask,adj,label) # [batch_size, conv_size, utter_dim]
+        utter_emb = self.utter_encoder(input_ids, attention_mask,adj,label) 
         utter_emb,rel_emb_k,rel_emb_v = self.pag(utter_emb)
         logits = self.classifier(utter_emb,rel_emb_k,rel_emb_v,mask)
         
