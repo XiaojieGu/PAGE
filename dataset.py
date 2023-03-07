@@ -5,9 +5,6 @@ from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 from transformers import RobertaTokenizer
 
-window = 2
-
-
 
 class BaseDataset(Dataset):
     def __init__(self, model_size='base', phase='train'):
@@ -74,6 +71,7 @@ class BaseDataset(Dataset):
                             ev_vic[i - 1] = 1
                     evi.append(ev_vic)
                     act_lbl.append(self.act_mapping[a])
+
                 evi = torch.tensor(evi, dtype=torch.long)
                 msk = torch.ones_like(evi, dtype=torch.long).tril(0)
                 spk = torch.tensor(spk)
@@ -85,6 +83,7 @@ class BaseDataset(Dataset):
                 tk_id = pad_sequence(tk_id, batch_first=True, padding_value=1)
                 at_mk = pad_sequence(at_mk, batch_first=True, padding_value=0)
                 emo = torch.tensor(emo, dtype=torch.long)
+                
                 self.utterance.append(utter)
                 self.token_ids.append(tk_id)
                 self.attention_mask.append(at_mk)
@@ -147,7 +146,7 @@ def collate_fn(data):
                 a_msk = torch.cat([a_msk, torch.zeros(a_msk.shape[0], max_len-a_msk.shape[1], dtype=torch.long)], dim=1)
             attention_mask = torch.cat([attention_mask, a_msk], dim=0)
         label.append(d[3])
-        # [2, conv_len, conv_len]
+
         token_ids_1.append(d[1])
         attention_mask_1.append(d[2])
         adj_index.append(d[4])
@@ -155,6 +154,7 @@ def collate_fn(data):
         mask.append(d[6])
         clen.append(d[7])
         act_label.append(d[8])
+
     label = pad_sequence(label, batch_first=True, padding_value=-1)
     act_label = pad_sequence(act_label, batch_first=True, padding_value=-1)
     max_len = max(clen)
@@ -163,7 +163,7 @@ def collate_fn(data):
     ece_pair = [torch.cat([torch.cat([ep, torch.zeros(max_len-ep.shape[0], ep.shape[1])], dim=0), torch.zeros(max_len, max_len-ep.shape[1])], dim=1) for ep in ece_pair]
     ece_pair = torch.stack(ece_pair, dim=0)
     adj_index = [torch.cat([torch.cat([a, torch.zeros(2, max_len-a.shape[1], a.shape[2])], dim=1), torch.zeros(2, max_len, max_len-a.shape[2])], dim=2) for a in adj_index]
-    # [batch_size, 2, conv_len, conv_len]
+
     adj_index = torch.stack(adj_index, dim=0)
 
     return token_ids_1, attention_mask_1, clen, mask, adj_index, label, ece_pair, act_label
@@ -176,12 +176,13 @@ def get_dataloaders(model_size, batch_size, valid_shuffle):
 
     train_set = BaseDataset(model_size, 'train')
     dev_set = BaseDataset(model_size, 'dev')
-    test_set = BaseDataset(model_size, 'test')
-    iemo_set = BaseDataset(model_size,'IE')
+    dd_set = BaseDataset(model_size, 'DD')
+    ie_set = BaseDataset(model_size,'IE')
 
     train_loader = DataLoader(train_set, batch_size, True, collate_fn=collate_fn)
     dev_loader = DataLoader(dev_set, batch_size, valid_shuffle, collate_fn=collate_fn)
-    test_loader = DataLoader(test_set, batch_size, valid_shuffle, collate_fn=collate_fn)
-    iemo_loader = DataLoader(iemo_set, batch_size, valid_shuffle, collate_fn=collate_fn)
-    return train_loader, dev_loader, test_loader, iemo_loader
+    dd_loader = DataLoader(dd_set, batch_size, valid_shuffle, collate_fn=collate_fn)
+    ie_loader = DataLoader(ie_set, batch_size, valid_shuffle, collate_fn=collate_fn)
+
+    return train_loader, dev_loader, dd_loader, ie_loader
 
