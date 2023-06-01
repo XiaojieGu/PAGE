@@ -1,5 +1,5 @@
 # PAGE: A Position-Aware Graph-based model for Emotion cause entailment
-The source code for paper -- PAGE: A POSITION-AWARE GRAPH-BASED MODEL FOR EMOTION CAUSE ENTAILMENT IN CONVERSATION.
+The source code for paper(appeared in EMNLP 2023) -- PAGE: A POSITION-AWARE GRAPH-BASED MODEL FOR EMOTION CAUSE ENTAILMENT IN CONVERSATION.
 ## Environment
 - Python==3.7.11
 - Pytorch==1.10.2
